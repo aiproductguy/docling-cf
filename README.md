@@ -72,6 +72,16 @@ An easy to use UI is available at the `/ui` endpoint.
 
 Visit the [Docling Serve documentation](./docs/README.md) for learning how to [configure the webserver](./docs/configuration.md), use all the [runtime options](./docs/usage.md) of the API and [deployment examples](./docs/deployment.md).
 
+### Default Configuration
+
+Docling Serve comes pre-configured with sensible defaults:
+
+- Default embedding model: `sentence-transformers/all-MiniLM-L6-v2`
+- Default embedding engine: SentenceTransformers
+- Default OCR engine: EasyOCR
+
+You can customize these settings as needed. See the [configuration documentation](./docs/configuration.md) for details.
+
 ## Get help and support
 
 Please feel free to connect with us using the [discussion section](https://github.com/docling-project/docling/discussions).

@@ -444,3 +444,9 @@ pip-selfcheck.json
 # Makefile
 .action-lint
 .markdown-lint
+
+# Cloudflare Wrangler
+.wrangler/
+
+# Node.js
+node_modules/

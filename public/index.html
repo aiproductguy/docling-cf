@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docling Serve</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2a5885;
+            margin-bottom: 10px;
+        }
+        
+        h2 {
+            color: #3a6ea5;
+            margin-top: 30px;
+        }
+        
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .endpoint {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .upload-form {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        button {
+            background-color: #2a5885;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #3a6ea5;
+        }
+        
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            display: none;
+        }
+
+        .db-stats {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #2a5885;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .count-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #3a6ea5;
+            color: white;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .refresh-btn {
+            margin-top: 10px;
+            font-size: 14px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+        }
+
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Docling Serve</h1>
+        <p>Document processing API powered by Cloudflare Workers</p>
+        
+        <h2>API Endpoints</h2>
+        <div class="endpoint">GET /health</div>
+        <div class="endpoint">GET /api</div>
+        <div class="endpoint">POST /v1alpha/convert/source</div>
+        <div class="endpoint">POST /v1alpha/convert/file</div>
+        <div class="endpoint">POST /v1alpha/convert/source/async</div>
+        <div class="endpoint">GET /v1alpha/status/poll/:taskId</div>
+        <div class="endpoint">GET /v1alpha/result/:taskId</div>
+        <div class="endpoint">POST /v1alpha/callback/task/progress</div>
+        
+        <h2>Database Directory</h2>
+        <div class="db-stats">
+            <table id="tableDirectory">
+                <thead>
+                    <tr>
+                        <th>Table Name</th>
+                        <th>Record Count</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>documents</td>
+                        <td id="documents-count">Loading...</td>
+                        <td>Main document storage for metadata and content</td>
+                    </tr>
+                    <tr>
+                        <td>tasks</td>
+                        <td id="tasks-count">Loading...</td>
+                        <td>Processing task tracking with status and progress</td>
+                    </tr>
+                    <tr>
+                        <td>sources</td>
+                        <td id="sources-count">Loading...</td>
+                        <td>Document source URLs and references</td>
+                    </tr>
+                    <tr>
+                        <td>file_chunks</td>
+                        <td id="file_chunks-count">Loading...</td>
+                        <td>Large document storage broken into chunks</td>
+                    </tr>
+                    <tr>
+                        <td>vectorizers</td>
+                        <td id="vectorizers-count">Loading...</td>
+                        <td>Model configurations for document vectorization</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="refreshTableStats" class="refresh-btn">Refresh Table Counts</button>
+        </div>
+        
+        <h2>Upload a Document</h2>
+        <div class="upload-form">
+            <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png" multiple>
+            <button id="uploadButton">Upload and Process</button>
+            
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('uploadButton').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+            
+            if (fileInput.files.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+            
+            const formData = new FormData();
+            
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('file', fileInput.files[i]);
+            }
+            
+            formData.append('format', 'json');
+            formData.append('enable_ocr', 'true');
+            
+            resultDiv.textContent = 'Processing...';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('/v1alpha/convert/file', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                
+                // After successful upload, refresh the table counts
+                fetchTableCounts();
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Function to fetch table counts from API
+        async function fetchTableCounts() {
+            try {
+                const response = await fetch('/api/table-counts');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch table counts');
+                }
+                const data = await response.json();
+                
+                // Update count cells in the table
+                Object.keys(data).forEach(table => {
+                    const countElement = document.getElementById(`${table}-count`);
+                    if (countElement) {
+                        countElement.textContent = data[table].toString();
+                    }
+                });
+            } catch (error) {
+                console.error('Error fetching table counts:', error);
+                // Set error message in count cells
+                const tables = ['documents', 'tasks', 'sources', 'file_chunks', 'vectorizers'];
+                tables.forEach(table => {
+                    const countElement = document.getElementById(`${table}-count`);
+                    if (countElement) {
+                        countElement.textContent = 'Error';
+                    }
+                });
+            }
+        }
+
+        // Set up refresh button
+        document.getElementById('refreshTableStats').addEventListener('click', fetchTableCounts);
+
+        // Fetch table counts on page load
+        document.addEventListener('DOMContentLoaded', fetchTableCounts);
+    </script>
+</body>
+</html> 

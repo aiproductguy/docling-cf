@@ -6,6 +6,7 @@ Choose the deployment option that best fits your setup.
 
 - **[Local GPU](#local-gpu)**: For deploying the application locally on a machine with a NVIDIA GPU (using Docker Compose).
 - **[OpenShift](#openshift)**: For deploying the application on an OpenShift cluster, designed for cloud-native environments.
+- **[Cloudflare](#cloudflare)**: For deploying the application as a Cloudflare Worker.
 
 ---
 
@@ -192,3 +193,109 @@ curl -X 'POST' \
     "http_sources": [{"url": "https://arxiv.org/pdf/2501.17887"}]
   }'
 ```
+
+## Cloudflare
+
+### Worker deployment
+
+This deployment has the following features:
+
+- Serverless architecture using Cloudflare Workers
+- Document storage in Cloudflare D1 SQL database
+- Lower latency due to edge network deployment
+- Default `gpt-4o-mini` model configuration
+
+#### Prerequisites
+
+- Node.js (v16 or later)
+- npm or yarn
+- Cloudflare account
+- Cloudflare Workers subscription
+- Cloudflare D1 database access
+- Wrangler CLI configured with your account
+
+#### Setup Steps
+
+1. Configure your Cloudflare account in `wrangler.toml`
+
+2. Create D1 database:
+
+```sh
+npx wrangler d1 create docling_documents
+```
+
+3. Update the `database_id` in `wrangler.toml` with the ID returned from the command above
+
+4. Initialize the database schema:
+
+```sh
+npx wrangler d1 execute docling_documents --file=schema.sql
+```
+
+5. Deploy to Cloudflare:
+
+```sh
+npx wrangler deploy
+```
+
+#### Configuration Options
+
+The following environment variables can be configured in the `wrangler.toml` file:
+
+```toml
+[vars]
+DOCLING_SERVE_ENABLE_UI = "false"
+DOCLING_SERVE_API_HOST = "localhost"
+DOCLING_SERVE_MAX_NUM_PAGES = "1000"
+DOCLING_SERVE_MAX_FILE_SIZE = "104857600" # 100MB
+DEFAULT_MODEL = "gpt-4o-mini"
+```
+
+#### Testing the Deployment
+
+Once deployed, test the API using:
+
+```sh
+# Retrieve your worker URL (replace with your actual URL)
+WORKER_URL="https://docling-cf.example.workers.dev"
+
+# Make a test query
+curl -X 'POST' \
+  "${WORKER_URL}/v1alpha/convert/source/async" \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "http_sources": [{"url": "https://arxiv.org/pdf/2501.17887"}]
+  }'
+```
+
+<details>
+<summary><b>Limitations</b></summary>
+
+- Cloudflare Workers have execution time limits (30 seconds for paid plans)
+- D1 database has size limitations for query results and content storage
+- The serverless architecture may require adaptations for long-running processing tasks
+- High-compute operations like large document processing should be broken into smaller tasks
+
+</details>
+
+<details>
+<summary><b>Monitoring and Debugging</b></summary>
+
+After deployment, you can monitor and debug your Cloudflare Worker using:
+
+- The Cloudflare Dashboard for performance metrics and logs
+- Wrangler for local development and testing:
+
+```sh
+# Run locally for testing
+npx wrangler dev
+```
+
+- Tail logs from your deployed worker:
+
+```sh
+npx wrangler tail
+```
+
+</details>

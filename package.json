@@ -1,0 +1,25 @@
+{
+  "name": "docling-serve-worker",
+  "version": "0.9.0",
+  "description": "Cloudflare Worker implementation of docling-serve",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish",
+    "build": "tsc",
+    "format": "prettier --write '**/*.{js,ts}'",
+    "lint": "eslint '**/*.{js,ts}'"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "itty-router": "^4.0.23"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240314.0",
+    "@types/node": "^20.10.5",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.29.1"
+  }
+} 

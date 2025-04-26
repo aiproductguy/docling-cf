@@ -40,6 +40,7 @@ THe following table describes the options to configure the Docling Serve app.
 | `--enable-ui` | `DOCLING_SERVE_ENABLE_UI` | `false` | Enable the demonstrator UI. |
 |  | `DOCLING_SERVE_ENABLE_REMOTE_SERVICES` | `false` | Allow pipeline components making remote connections. For example, this is needed when using a vision-language model via APIs. |
 |  | `DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS` | `false` | Allow the selection of third-party plugins. |
+|  | `DOCLING_SERVE_DEFAULT_MODEL` | `gpt-4o-mini` | The default language model to use for processing. |
 |  | `DOCLING_SERVE_MAX_DOCUMENT_TIMEOUT` | `604800` (7 days) | The maximum time for processing a document. |
 |  | `DOCLING_SERVE_MAX_NUM_PAGES` |  | The maximum number of pages for a document to be processed. |
 |  | `DOCLING_SERVE_MAX_FILE_SIZE` |  | The maximum file size for a document to be processed. |
@@ -74,3 +75,12 @@ The following table describes the options to configure the Docling Serve KFP eng
 | `DOCLING_SERVE_ENG_KFP_SELF_CALLBACK_ENDPOINT` |  | If set, it enables internal callbacks providing status update of the KFP job. Usually something like `https://NAME.NAMESPACE.svc.cluster.local:5001/v1alpha/callback/task/progress`. |
 | `DOCLING_SERVE_ENG_KFP_SELF_CALLBACK_TOKEN_PATH` |  | The token used for authenticating the progress callback. For cluster-internal workloads, use `/run/secrets/kubernetes.io/serviceaccount/token`. |
 | `DOCLING_SERVE_ENG_KFP_SELF_CALLBACK_CA_CERT_PATH` |  | The CA certifcate for the progress callback. For cluster-inetrnal workloads, use `/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt`. |
+
+### Embedding and Tokenization
+
+Docling Serve uses embedding models for processing documents. The default embedding model is `sentence-transformers/all-MiniLM-L6-v2`, which is a lightweight model that provides a good balance between performance and accuracy.
+
+| ENV | Default | Description |
+|-----|---------|-------------|
+| `DOCLING_SERVE_EMBEDDING_MODEL` | `sentence-transformers/all-MiniLM-L6-v2` | The embedding model to use for document processing. This is the default tokenizer used in the Cloudflare Worker implementation. |
+| `DOCLING_SERVE_EMBEDDING_ENGINE` | `Default (SentenceTransformers)` | The engine to use for embeddings. Options include `Default (SentenceTransformers)`, `Ollama`, and `OpenAI`. |

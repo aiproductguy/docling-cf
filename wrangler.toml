@@ -1,0 +1,19 @@
+name = "docling-serve"
+main = "src/index.ts"
+compatibility_date = "2023-07-24"
+
+[vars]
+DOCLING_SERVE_ENABLE_UI = "false"
+DOCLING_SERVE_API_HOST = "localhost"
+DOCLING_SERVE_MAX_NUM_PAGES = "1000"
+DOCLING_SERVE_MAX_FILE_SIZE = "104857600" # 100MB
+DEFAULT_MODEL = "gpt-4o-mini"
+
+# D1 database configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "docling_documents"
+database_id = "8d09283a-dcd9-4b14-ab6f-43daa9269bbd" # From the D1 creation command output
+
+[site]
+bucket = "./public" 
